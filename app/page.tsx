@@ -1,113 +1,212 @@
-import Image from "next/image";
+"use client"
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ClipboardList, HardHat, Laptop, Menu, MessageSquare, Moon, Paintbrush, Send, Sun } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useEffect, useRef, useState } from 'react'
+
+import BillOfQuantities from './components/BillOfQuantities'
+import { Button } from "@/components/ui/button"
+import Construction from './components/Construction'
+import Contract from './components/Contract'
+import Design from './components/Design'
+import { Input } from "@/components/ui/input"
+import Planning from './components/Planning'
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { useTheme } from "next-themes"
+
+type Message = {
+  role: 'user' | 'ai'
+  content: string
+}
+
+const mockAIResponse = (query: string) => {
+  const responses = [
+    "For a strong residential foundation, start with a soil test to determine the best foundation type for your area.",
+    "To maximize energy efficiency in homes, consider installing double-pane windows and adding extra insulation in the attic and walls.",
+    "When designing the roof for a residential unit, factor in local weather patterns and choose materials like asphalt shingles or metal roofing accordingly.",
+    "Ensure proper ventilation in residential buildings by installing a balanced HVAC system and strategically placed windows for natural airflow.",
+    "For residential plumbing, plan your water supply and drainage systems carefully, considering the layout of bathrooms, kitchen, and laundry areas."
+  ]
+  return responses[Math.floor(Math.random() * responses.length)]
+}
 
 export default function Home() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const { setTheme, theme } = useTheme()
+  const [currentPage, setCurrentPage] = useState('chat')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (input.trim()) {
+      setMessages(prev => [...prev, { role: 'user', content: input }])
+      setInput('')
+      // Simulate AI response
+      setTimeout(() => {
+        setMessages(prev => [...prev, { role: 'ai', content: mockAIResponse(input) }])
+      }, 1000)
+    }
+  }
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [messages])
+
+  const navItems = [
+    { icon: MessageSquare, label: 'Chat', page: 'chat' },
+    { icon: ClipboardList, label: 'Planning', page: 'planning' },
+    { icon: Paintbrush, label: 'Design', page: 'design' },
+    { icon: HardHat, label: 'Construction', page: 'construction' },
+    { icon: Laptop, label: 'Bill of Quantities', page: 'billOfQuantities' },
+    { icon: Laptop, label: 'Contract', page: 'contract' }, // New item
+  ]
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'chat':
+        return (
+          <Card className="flex-grow m-4 overflow-hidden flex flex-col">
+            <CardHeader>
+              <CardTitle className="text-xl sm:text-2xl text-center">Residential Construction Assistant</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-hidden">
+              <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                    <div className={`flex items-start max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
+                        <AvatarFallback>{message.role === 'user' ? 'U' : 'AI'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-500">{message.role === 'user' ? 'You' : 'AI'}</div>
+                        <div className="text-sm">{message.content}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </ScrollArea>
+            </CardContent>
+            <CardFooter>
+              <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
+                <Input
+                  type="text"
+                  placeholder="e.g., What are the key steps in planning a residential construction project?"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  className="flex-grow"
+                />
+                <Button type="submit" size="icon">
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </form>
+            </CardFooter>
+          </Card>
+        )
+      case 'planning':
+        return <Planning />
+      case 'design':
+        return <Design />
+      case 'construction':
+        return <Construction />
+      case 'billOfQuantities':
+        return <BillOfQuantities />
+      case 'contract': // New case
+        return <Contract />
+      default:
+        return null
+    }
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="flex flex-col h-screen">
+      <nav className="bg-background border-b">
+        <div className="flex justify-between items-center p-4">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="lg:hidden">
+                <Menu className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+              <nav className="flex flex-col gap-4">
+                {navItems.map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className="justify-start"
+                    onClick={() => {
+                      setCurrentPage(item.page)
+                      setIsOpen(false)
+                    }}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                  </Button>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <h1 className="text-xl font-bold">Residential Construction AI</h1>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                {theme === 'dark' ? (
+                  <Moon className="h-[1.2rem] w-[1.2rem]" />
+                ) : theme === 'light' ? (
+                  <Sun className="h-[1.2rem] w-[1.2rem]" />
+                ) : (
+                  <Laptop className="h-[1.2rem] w-[1.2rem]" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTheme("light")}>
+                <Sun className="mr-2 h-4 w-4" />
+                <span>Light</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <Moon className="mr-2 h-4 w-4" />
+                <span>Dark</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("system")}>
+                <Laptop className="mr-2 h-4 w-4" />
+                <span>System</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </nav>
+      <div className="flex flex-grow overflow-hidden">
+        <nav className="hidden lg:flex flex-col w-[240px] p-4 border-r">
+          {navItems.map((item, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              className="justify-start mb-2"
+              onClick={() => setCurrentPage(item.page)}
+            >
+              <item.icon className="mr-2 h-4 w-4" />
+              {item.label}
+            </Button>
+          ))}
+        </nav>
+        {renderPage()}
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    </div>
+  )
 }
